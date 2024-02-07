@@ -13,8 +13,8 @@ public class DisplayRender extends JFrame {
     int height;
     Camera cam;
     CustomPanel customPanel;
-    int n = 20;
-    int m = 20;
+    int n = 40;
+    int m = 40;
 
 
 
@@ -77,7 +77,7 @@ public class DisplayRender extends JFrame {
                 @Override
                 public void mouseMoved(MouseEvent e) {
                     cam.toTurnX += e.getX() + 8 - (cam.width / 2);
-                    cam.toTurnY += e.getY() + 11 - (cam.height / 2);
+                    cam.toTurnY += e.getY() + 7 - (cam.height / 2);
                     try{
                         Robot robot = new Robot();
                         robot.mouseMove(cam.width, cam.height);
@@ -165,7 +165,7 @@ public class DisplayRender extends JFrame {
 
         public void keyTyped(KeyEvent e) {
             if (e.getKeyChar() == 'p') {
-                SortThread sortThread = new SortThread(pillars, 0, 1);
+                SortThread sortThread = new SortThread(pillars, 0, 0);
                 sortThread.start();
             }
         }
@@ -248,12 +248,12 @@ public class DisplayRender extends JFrame {
                             temp = pillars[(j + 1) / m][(j + 1) % m].getHeight();
                             pillars[(j + 1) / m][(j + 1) % m].setHeight(pillars[j / m][j % m].getHeight());
                             pillars[j / m][j % m].setHeight(temp);
-                            try {
-                                Thread.sleep(sortDelay, sortDelayNano);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
                         }
+                    }
+                    try {
+                        Thread.sleep(0, 1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
                 }
             }

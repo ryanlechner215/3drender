@@ -7,8 +7,7 @@ public class Camera {
     private ThreeDVector velocity = new ThreeDVector(0, 0, 0);
     private ThreeDVector forward = new ThreeDVector(facing.i, facing.j, 0).toUnit();
     private ThreeDVector left = new ThreeDVector(-1 * facing.j, facing.i, 0).toUnit();
-    private ThreeDVector up = facing.cross(left);
-    private moverThread moverThread;
+    private MoverThread moverThread;
     private double sensitivity;
     private ThreeMatrix matrix = new ThreeMatrix(facing, left, facing.cross(left));
     private ThreeDPoint originNew = facing.getOrigin().multByMatrix(matrix);
@@ -25,7 +24,6 @@ public class Camera {
     public boolean ctrl = false;
     public boolean shift = false;
     public DisplayRender.CustomPanel customPanel;
-    private Pillar[][] pillars;
 
     public ThreeDVector getForwards() {
         return forward;
@@ -50,25 +48,16 @@ public class Camera {
 
     public Camera(double aspectRatio, double sensitivity) {
         this.aspectRatio = aspectRatio;     // Aspect ratio should be the width divided by the height of the window
-        moverThread = new moverThread(this);
+        moverThread = new MoverThread(this);
         moverThread.start();
         this.sensitivity = sensitivity;
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
         this.width = (int) dim.getWidth() / 2;
         this.height = (int) dim.getHeight() / 2;
-        //System.out.println("W and H -> " + this.width + ", " + this.height);
     }
 
     public void addPanel(DisplayRender.CustomPanel customPanel) {
         this.customPanel = customPanel;
-    }
-
-    public void addPillars(Pillar[][] pillars) {
-        this.pillars = pillars;
-    }
-
-    protected void finalize() {
-        moverThread.end();
     }
 
     public void setAspectRatio(double aspectRatio) {
@@ -81,9 +70,9 @@ public class Camera {
 
     public void mouseMovement(int xy, int z) {
         ThreeDVector vec = new ThreeDVector(facing);               // xy is distance the mouse moved from last time this was called, left to right
-        double downScaledXy = Math.sqrt(Math.pow(facing.i, 2) + Math.pow(facing.j, 2)) * xy;     // z is the same thing, for forward and backward
-        if (Math.abs(downScaledXy) < 0.1 * Math.abs(xy)) downScaledXy = 0.1 * xy * Math.signum(xy);
-        if (xy == 0) downScaledXy = 0;
+        // double downScaledXy = Math.sqrt(Math.pow(facing.i, 2) + Math.pow(facing.j, 2)) * xy;     // z is the same thing, for forward and backward
+        // if (Math.abs(downScaledXy) < 0.1 * Math.abs(xy)) downScaledXy = 0.1 * xy * Math.signum(xy);
+        // if (xy == 0) downScaledXy = 0;
         ThreeMatrix zAxisRotate = new ThreeMatrix(new double[][] {{Math.cos(xy * sensitivity), -1 * Math.sin(xy * sensitivity), 0}, {Math.sin(xy * sensitivity), Math.cos(xy * sensitivity), 0}, {0, 0, 1}});
         vec = vec.multiply(Math.cos(z * sensitivity));
         vec.add(left.cross(facing).multiply(Math.sin(z * sensitivity)));
@@ -102,7 +91,6 @@ public class Camera {
     public void rotateTo(ThreeDVector vec) {
         facing.changeDirection(vec.getUnit());    // Called by mouseMovement, sets new facing vector, then sets left and forwards accordingly
         left = new ThreeDVector(-1 * facing.j, facing.i, 0).toUnit();
-        up = facing.cross(left);
         forward = new ThreeDVector(facing.i, facing.j, 0).toUnit();
         matrix = new ThreeMatrix(facing, left, facing.cross(left));
         originNew = facing.getOrigin().multByMatrix(matrix);
@@ -125,7 +113,6 @@ public class Camera {
         ad -= (a) ? 1 : 0;
         int z = (space) ? 1 : 0;
         z -= (ctrl) ? 1 : 0;
-        //System.out.println("w: " + w + "   a: " + a + "   s: " + s + "   d: " + d + "   sp: " + space + "   ctrl: " + ctrl + "   |   ws: " + ws + "   ad: " + ad + "   z: " + z);
         velocity.add(forward.multiply(ws * 0.05));   // parameters are -1 for opposite direction being pressed,
         velocity.add(left.multiply(ad * 0.05));       // 0 for not being pressed, and 1 for main direction pressed
         velocity.k += z * 0.05;
@@ -162,12 +149,11 @@ public class Camera {
     }
 }
 
-class moverThread extends Thread {
+class MoverThread extends Thread {
     private Camera cam;
     private boolean running = true;
-    private DisplayRender.CustomPanel customPanel;
 
-    public moverThread(Camera cam) {
+    public MoverThread(Camera cam) {
         this.cam = cam;
     }
 
@@ -177,7 +163,6 @@ class moverThread extends Thread {
 
     @Override
     public void run() {
-        System.out.println("Starting Mover Thread");
         while (running) {
             cam.mouseMovement(cam.toTurnX, cam.toTurnY);
             cam.move(cam.getVelocity());
@@ -188,10 +173,9 @@ class moverThread extends Thread {
             if (cam.customPanel != null) cam.customPanel.repaint();
             try {
                 Thread.sleep(15);
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        System.out.println("Mover Thread Closing");
     }
 }
